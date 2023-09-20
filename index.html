@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blender Cube Color Picker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        #notification {
+            display: none;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <input type="color" id="colorPicker" value="#ff0000">
+    <button onclick="updateCubeColor()">Render Cube</button>
+    <p id="notification">Rendering cube...</p>
+    <img id="renderedImage" src="" alt="Rendered Cube Image">
+
+    <script>
+        var socket = io.connect('http://127.0.0.1:5000');
+        var sessionId;
+	socket.on('session_id', function(data) {
+	    sessionId = data.session_id;
+	    console.log(sessionId)
+	});
+
+        socket.on('connect', function() {
+	   console.log('Connected to the server.');	
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('Disconnected from the server.');
+        });
+	
+	function updateCubeColor() {
+          var color = document.getElementById('colorPicker').value;
+          color = color.substr(1);  // remove the '#' prefix
+          document.getElementById('notification').style.display = 'block'; // show notification
+          socket.emit('update_cube', {color: color, session_id: sessionId});  // Send UUID as well
+   	}
+
+        socket.on('cube_updated', function(data) {
+            console.log(data);
+            document.getElementById('notification').style.display = 'none'; // hide notification
+            if (data.image_path) {
+                // Update the image element with the new rendered image.
+                document.getElementById('renderedImage').src = data.image_path;
+            }
+        });
+
+    </script>
+</body>
+</html>
