@@ -1,4 +1,3 @@
-# blender --background --python blender_script.py -- room4.glb
 import bpy
 import mathutils
 import sys
@@ -19,22 +18,17 @@ def look_at(obj, target_pos):
     obj.rotation_euler = rot_quat.to_euler()
 
 
-# Parse arguments from command line
-args = sys.argv[sys.argv.index("--") + 1:]
-glb_file_path, material_id, product_id, scene_id, camera_position_arg, camera_target_arg = args
+# Hardcoded values for testing
+glb_file_path = "./room4.glb"  # Adjust this path to your GLB file
+camera_position = (1.00, 1.00, 1.00)
+camera_target = (1.87, 0.97, 0.51)
 
-# Convert string arguments to appropriate data types
-camera_position = tuple(map(float, camera_position_arg.split(',')))
-camera_target = tuple(map(float, camera_target_arg.split(',')))
-
-# Ensure the GLB file path is correct and accessible
+# Import GLB file
 try:
-    # Import GLB file
     bpy.ops.import_scene.gltf(filepath=glb_file_path)
 except Exception as e:
     print(f"Failed to import {glb_file_path}: {e}")
     sys.exit(1)
-
 
 # Create or get the camera
 camera_data = bpy.data.cameras.new(
@@ -42,53 +36,14 @@ camera_data = bpy.data.cameras.new(
 free_camera = bpy.data.objects.get("FreeCamera")
 if not free_camera:
     free_camera = bpy.data.objects.new("FreeCamera", camera_data)
-    # Adjusted for the correct scene collection
+    # Link camera object to the current scene
     bpy.context.collection.objects.link(free_camera)
 
-# Adjusting World background to solid white
-bpy.data.worlds['World'].use_nodes = True
-bg = bpy.data.worlds['World'].node_tree.nodes['Background']
-bg.inputs[0].default_value = (1, 1, 1, 1)  # Correct alpha value to 1
-bg.inputs[1].default_value = 1.0  # Strength of the background color
-
-# Lighting setup
-sun = bpy.data.lights.new(name="Sun", type='SUN')
-sun.use_shadow = True
-sun.shadow_soft_size = 0.1
-sun_obj = bpy.data.objects.new(name="Sun", object_data=sun)
-bpy.context.collection.objects.link(sun_obj)
-sun_obj.location = (10, 10, 10)
-
-# Choose render engine: Cycles or Eevee
-# Example: Switch to 'BLENDER_EEVEE' if preferred
-bpy.context.scene.render.engine = 'CYCLES'
-
-# Render settings for Cycles
-bpy.context.scene.cycles.samples = 1
-
-# Set the scene's active camera
-bpy.context.scene.camera = free_camera
-
-# Compositing for contrast enhancement
-bpy.context.scene.use_nodes = True
-nodes = bpy.context.scene.node_tree.nodes
-links = bpy.context.scene.node_tree.links
-nodes.clear()  # Clear existing nodes
-
-rl_node = nodes.new('CompositorNodeRLayers')
-bc_node = nodes.new('CompositorNodeBrightContrast')
-comp_node = nodes.new('CompositorNodeComposite')
-
-bc_node.inputs['Bright'].default_value = 0.0
-bc_node.inputs['Contrast'].default_value = 0.5
-
-links.new(rl_node.outputs[0], bc_node.inputs[0])
-links.new(bc_node.outputs[0], comp_node.inputs[0])
-
-free_camera = bpy.data.objects.get("FreeCamera")
-if not free_camera:
-    free_camera = bpy.data.objects.new("FreeCamera", camera_data)
-    bpy.context.collection.objects.link(free_camera)
+# Set camera properties (assuming perspective mode and FreeCamera type)
+free_camera.data.type = 'PERSP'
+free_camera.data.lens_unit = 'MILLIMETERS'
+free_camera.data.clip_start = 0.1
+free_camera.data.clip_end = 10000
 
 # Set camera position and make it look at the target
 free_camera.location = mathutils.Vector(camera_position)
@@ -97,12 +52,50 @@ look_at(free_camera, camera_target)
 # Set the scene's active camera
 bpy.context.scene.camera = free_camera
 
+# Adjusting World background to solid white
+bpy.data.worlds['World'].use_nodes = True
+bg = bpy.data.worlds['World'].node_tree.nodes['Background']
+bg.inputs[0].default_value = (1, 1, 1, 1)  # Correct alpha value to 1
+bg.inputs[1].default_value = 1.0  # Strength of the background color
+
+# Lighting setup
+if "Sun" not in bpy.data.objects:
+    bpy.ops.object.light_add(type='SUN', location=(10, 10, 10))
+sun = bpy.data.objects['Sun']
+sun.data.use_shadow = True  # Ensure shadows are enabled
+sun.data.shadow_soft_size = 0.1  # Adjust for softer shadows
+
 # Render settings
-bpy.context.scene.render.engine = 'CYCLES'  # Or 'BLENDER_EEVEE'
+bpy.context.scene.render.engine = 'CYCLES'
+bpy.context.scene.cycles.samples = 1
+# Choose 'CYCLES' or 'BLENDER_EEVEE'
 bpy.context.scene.render.filepath = '/tmp/rendered_scene.png'
 bpy.context.scene.render.image_settings.file_format = 'PNG'
 bpy.ops.render.render(write_still=True)
+bpy.context.scene.render.engine = 'CYCLES'
 
+# Create or get the camera
+camera_data = bpy.data.cameras.new(name="360CameraData")
+camera_360 = bpy.data.objects.new("360Camera", camera_data)
+bpy.context.collection.objects.link(camera_360)
+bpy.context.scene.camera = camera_360
+
+# Set the camera to panoramic and equirectangular type for 360 rendering
+camera_360.data.type = 'PANO'
+camera_360.data.cycles_panorama_type = 'EQUIRECTANGULAR'  # Corrected property access
+
+# Optionally, set camera location and rotation
+camera_360.location = (0, 0, 1)  # Example location, adjust as needed
+
+# Configure render settings (resolution, samples, output path)
+bpy.context.scene.render.resolution_x = 4096  # Adjust as needed
+bpy.context.scene.render.resolution_y = 2048  # Adjust as needed
+bpy.context.scene.render.resolution_percentage = 100
+bpy.context.scene.cycles.samples = 1
+
+# Set output file path and render
+bpy.context.scene.render.filepath = '/tmp/360_render.png'
+bpy.ops.render.render(write_still=True)
 
 # import boto3
 # from flask import send_file
