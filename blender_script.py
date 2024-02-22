@@ -7,51 +7,90 @@ import math  # Needed for converting degrees to radians
 
 
 def look_at(obj, target_pos):
-    """
-    Rotates 'obj' to look at 'target_pos' location.
-    """
     if not isinstance(target_pos, mathutils.Vector):
         target_pos = mathutils.Vector(target_pos)
-
     direction = target_pos - obj.location
     rot_quat = direction.to_track_quat('Z', 'Y')
     obj.rotation_euler = rot_quat.to_euler()
 
 
-# Hardcoded values for testing
-glb_file_path = "./room4.glb"  # Adjust this path to your GLB file
-camera_position = (1.00, 1.00, 1.00)
-camera_target = (1.87, 0.97, 0.51)
+# Parse arguments from the command
+args = sys.argv[sys.argv.index("--") + 1:]
+glb_file_path, material_id, product_id, scene_id, camera_position_arg, camera_target_arg, camera_rotation_arg = args
+
+# Convert string arguments to appropriate data types
+camera_position = tuple(map(float, camera_position_arg.split(',')))
+camera_target = tuple(map(float, camera_target_arg.split(',')))
+# New line for rotation
+camera_rotation = tuple(map(float, camera_rotation_arg.split(',')))
 
 # Import GLB file
-try:
-    bpy.ops.import_scene.gltf(filepath=glb_file_path)
-except Exception as e:
-    print(f"Failed to import {glb_file_path}: {e}")
-    sys.exit(1)
+bpy.ops.import_scene.gltf(filepath=glb_file_path)
 
 # Create or get the camera
-camera_data = bpy.data.cameras.new(
-    name="FreeCameraData")  # Create new camera data
+camera_data = bpy.data.cameras.new(name="FreeCameraData")
 free_camera = bpy.data.objects.get("FreeCamera")
 if not free_camera:
     free_camera = bpy.data.objects.new("FreeCamera", camera_data)
-    # Link camera object to the current scene
     bpy.context.collection.objects.link(free_camera)
 
-# Set camera properties (assuming perspective mode and FreeCamera type)
-free_camera.data.type = 'PERSP'
-free_camera.data.lens_unit = 'MILLIMETERS'
-free_camera.data.clip_start = 0.1
+# Set camera properties
+free_camera.data.clip_start = 1
 free_camera.data.clip_end = 10000
 
-# Set camera position and make it look at the target
+# Set camera position, rotation, and make it look at the target
 free_camera.location = mathutils.Vector(camera_position)
+# Convert rotation from degrees to radians and apply
+camera_rotation_radians = [math.radians(angle) for angle in camera_rotation]
+free_camera.rotation_mode = 'XZY'
+free_camera.rotation_euler = mathutils.Euler(camera_rotation_radians, 'XZY')
+print(camera_target)
 look_at(free_camera, camera_target)
+
+
+# Name of the existing mesh you want to turn into a light source
+
+# List of mesh names you want to turn into light sources
+mesh_names = ["Corona Light001", "Corona Light002",
+              "Corona Light003", "Corona Light003.009"]  # Add more names as needed
+
+for mesh_name in mesh_names:
+    mesh_light = bpy.data.objects.get(mesh_name)
+
+    if mesh_light:
+        # Create or get the emissive material
+        mat = bpy.data.materials.get(
+            "EmissiveMaterial") or bpy.data.materials.new(name="EmissiveMaterial")
+        mat.use_nodes = True
+        nodes = mat.node_tree.nodes
+        nodes.clear()  # Clear existing nodes
+
+        # Setup nodes
+        emission = nodes.new('ShaderNodeEmission')
+        # Adjust the strength as needed
+        emission.inputs['Strength'].default_value = 20
+        emission.inputs['Color'].default_value = (
+            1, 1, 1, 1)  # Adjust the color as needed
+
+        material_output = nodes.new('ShaderNodeOutputMaterial')
+
+        # Here's where the correction is applied:
+        links = mat.node_tree.links
+        links.new(emission.outputs['Emission'],
+                  material_output.inputs['Surface'])
+
+        # Apply material to all material slots
+        if mesh_light.data.materials:
+            mesh_light.data.materials[0] = mat  # Replace the first material
+        else:
+            # Add a new material slot if none exist
+            mesh_light.data.materials.append(mat)
+    else:
+        print(f"Mesh '{mesh_name}' not found")
+
 
 # Set the scene's active camera
 bpy.context.scene.camera = free_camera
-
 # Adjusting World background to solid white
 bpy.data.worlds['World'].use_nodes = True
 bg = bpy.data.worlds['World'].node_tree.nodes['Background']
@@ -64,39 +103,20 @@ if "Sun" not in bpy.data.objects:
 sun = bpy.data.objects['Sun']
 sun.data.use_shadow = True  # Ensure shadows are enabled
 sun.data.shadow_soft_size = 0.1  # Adjust for softer shadows
-
+sun.data.energy = 100
 # Render settings
 bpy.context.scene.render.engine = 'CYCLES'
 bpy.context.scene.cycles.samples = 1
 # Choose 'CYCLES' or 'BLENDER_EEVEE'
-bpy.context.scene.render.filepath = '/tmp/rendered_scene.png'
+bpy.context.scene.render.filepath = '/tmp/14.png'
 bpy.context.scene.render.image_settings.file_format = 'PNG'
 bpy.ops.render.render(write_still=True)
 bpy.context.scene.render.engine = 'CYCLES'
 
-# Create or get the camera
-camera_data = bpy.data.cameras.new(name="360CameraData")
-camera_360 = bpy.data.objects.new("360Camera", camera_data)
-bpy.context.collection.objects.link(camera_360)
-bpy.context.scene.camera = camera_360
+# 360
 
-# Set the camera to panoramic and equirectangular type for 360 rendering
-camera_360.data.type = 'PANO'
-camera_360.data.cycles_panorama_type = 'EQUIRECTANGULAR'  # Corrected property access
 
-# Optionally, set camera location and rotation
-camera_360.location = (0, 0, 1)  # Example location, adjust as needed
-
-# Configure render settings (resolution, samples, output path)
-bpy.context.scene.render.resolution_x = 4096  # Adjust as needed
-bpy.context.scene.render.resolution_y = 2048  # Adjust as needed
-bpy.context.scene.render.resolution_percentage = 100
-bpy.context.scene.cycles.samples = 1
-
-# Set output file path and render
-bpy.context.scene.render.filepath = '/tmp/360_render.png'
-bpy.ops.render.render(write_still=True)
-
+# s3 output
 # import boto3
 # from flask import send_file
 # import bpy
