@@ -68,7 +68,7 @@ for mesh_name in mesh_names:
         # Setup nodes
         emission = nodes.new('ShaderNodeEmission')
         # Adjust the strength as needed
-        emission.inputs['Strength'].default_value = 20
+        emission.inputs['Strength'].default_value = 50
         emission.inputs['Color'].default_value = (
             1, 1, 1, 1)  # Adjust the color as needed
 
@@ -106,9 +106,9 @@ sun.data.shadow_soft_size = 0.1  # Adjust for softer shadows
 sun.data.energy = 100
 # Render settings
 bpy.context.scene.render.engine = 'CYCLES'
-bpy.context.scene.cycles.samples = 1
+bpy.context.scene.cycles.samples = 10
 # Choose 'CYCLES' or 'BLENDER_EEVEE'
-bpy.context.scene.render.filepath = '/tmp/14.png'
+bpy.context.scene.render.filepath = '/tmp/15.png'
 bpy.context.scene.render.image_settings.file_format = 'PNG'
 bpy.ops.render.render(write_still=True)
 bpy.context.scene.render.engine = 'CYCLES'
