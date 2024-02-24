@@ -1,56 +1,44 @@
 import bpy
 import mathutils
 import sys
-import math  # Needed for converting degrees to radians
+import math
 
-# Function to make an object look at another location
-
-
-def look_at(obj, target_pos):
-    if not isinstance(target_pos, mathutils.Vector):
-        target_pos = mathutils.Vector(target_pos)
-    direction = target_pos - obj.location
-    rot_quat = direction.to_track_quat('Z', 'Y')
-    obj.rotation_euler = rot_quat.to_euler()
-
-
-# Parse arguments from the command
+# Parse arguments from the command line
 args = sys.argv[sys.argv.index("--") + 1:]
 glb_file_path, material_id, product_id, scene_id, camera_position_arg, camera_target_arg, camera_rotation_arg = args
 
 # Convert string arguments to appropriate data types
 camera_position = tuple(map(float, camera_position_arg.split(',')))
 camera_target = tuple(map(float, camera_target_arg.split(',')))
-# New line for rotation
+# Assuming these are in degrees
 camera_rotation = tuple(map(float, camera_rotation_arg.split(',')))
 
-# Import GLB file
+# Import the GLB file
 bpy.ops.import_scene.gltf(filepath=glb_file_path)
 
-# Create or get the camera
+# Setting up the camera
 camera_data = bpy.data.cameras.new(name="FreeCameraData")
 free_camera = bpy.data.objects.get("FreeCamera")
 if not free_camera:
     free_camera = bpy.data.objects.new("FreeCamera", camera_data)
     bpy.context.collection.objects.link(free_camera)
 
-# Set camera properties
+# Camera properties
 free_camera.data.clip_start = 1
 free_camera.data.clip_end = 10000
-
-# Set camera position, rotation, and make it look at the target
+free_camera.data.angle = 1  # Assuming a fixed FOV, adjust as needed
+free_camera.data.sensor_fit = 'HORIZONTAL'
 free_camera.location = mathutils.Vector(camera_position)
-# Convert rotation from degrees to radians and apply
+
+# Apply rotation directly, converting from degrees to radians and adjusting for coordinate system differences
+# Assuming the rotation order in Babylon.js is XYZ, which is common
 camera_rotation_radians = [math.radians(angle) for angle in camera_rotation]
-free_camera.rotation_mode = 'XZY'
-free_camera.rotation_euler = mathutils.Euler(camera_rotation_radians, 'XZY')
-print(camera_target)
-look_at(free_camera, camera_target)
+# Set rotation mode to XYZ which is common in Blender
+free_camera.rotation_mode = 'XYZ'
+free_camera.rotation_euler = mathutils.Euler(
+    (camera_rotation_radians[0], camera_rotation_radians[1], camera_rotation_radians[2]), 'XYZ')
 
 
-# Name of the existing mesh you want to turn into a light source
-
-# List of mesh names you want to turn into light sources
 mesh_names = ["Corona Light001", "Corona Light002",
               "Corona Light003", "Corona Light003.009"]  # Add more names as needed
 
@@ -106,9 +94,9 @@ sun.data.shadow_soft_size = 0.1  # Adjust for softer shadows
 sun.data.energy = 100
 # Render settings
 bpy.context.scene.render.engine = 'CYCLES'
-bpy.context.scene.cycles.samples = 10
+bpy.context.scene.cycles.samples = 1
 # Choose 'CYCLES' or 'BLENDER_EEVEE'
-bpy.context.scene.render.filepath = '/tmp/15.png'
+bpy.context.scene.render.filepath = '/tmp/18.png'
 bpy.context.scene.render.image_settings.file_format = 'PNG'
 bpy.ops.render.render(write_still=True)
 bpy.context.scene.render.engine = 'CYCLES'
