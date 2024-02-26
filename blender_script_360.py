@@ -94,52 +94,33 @@ sun.data.shadow_soft_size = 0.1  # Adjust for softer shadows
 sun.data.energy = 100
 # Render settings
 bpy.context.scene.render.engine = 'CYCLES'
-bpy.context.scene.cycles.samples = 1
-# Choose 'CYCLES' or 'BLENDER_EEVEE'
-bpy.context.scene.render.filepath = '/tmp/18.png'
-bpy.context.scene.render.image_settings.file_format = 'PNG'
-bpy.ops.render.render(write_still=True)
-
-# 360
-
-
-# s3 output
-# import boto3
-# from flask import send_file
-# import bpy
-# import sys
-
-# # Assume the last three arguments are material_id, product_id, and scene_id
-# args = sys.argv[sys.argv.index("--") + 1:]  # Get arguments after "--"
-# material_id, product_id, scene_id = args
-
-# # Set the output path dynamically, e.g., based on material_id, product_id, and scene_id
-# output_path = f"/tmp/render_{material_id}_{product_id}_{scene_id}.png"
-
-# # Set render settings
-# bpy.context.scene.render.filepath = output_path
-# bpy.context.scene.render.image_settings.file_format = 'PNG'  # Set output format to PNG
-
-# # Render the scene
+# bpy.context.scene.cycles.samples = 1
+# # Choose 'CYCLES' or 'BLENDER_EEVEE'
+# bpy.context.scene.render.filepath = '/tmp/18.png'
+# bpy.context.scene.render.image_settings.file_format = 'PNG'
 # bpy.ops.render.render(write_still=True)
 
+# Correctly set the camera for a 360° panoramic render
+free_camera.data.type = 'PANO'
+bpy.context.scene.cycles.panorama_type = 'EQUIRECTANGULAR'
 
-# @app.route('/render_output/<material_id>/<product_id>/<scene_id>')
-# def serve_render_output(material_id, product_id, scene_id):
-#     # Construct the file path based on the request parameters
-#     file_path = f"/tmp/render_{material_id}_{product_id}_{scene_id}.png"
+# Continue with your setup code...
+# It's important to set the scene's render engine to 'CYCLES' before trying to access cycles-specific properties
 
-#     # Check if file exists, if not return a 404 or similar
-#     try:
-#         return send_file(file_path, mimetype='image/png')
-#     except FileNotFoundError:
-#         return jsonify({"error": "File not found"}), 404
+# Adjust the camera's location and rotation as needed
+free_camera.location = mathutils.Vector(camera_position)
+# For a 360 panorama, the camera's rotation might be less relevant, but ensure it's oriented as desired
+free_camera.rotation_euler = (0, 0, 0)  # Reset rotation if necessary
+# bpy.context.scene.cycles.samples = 1
+# bpy.context.scene.cycles.samples = 1
 
+# Configure the render dimensions and output settings
+bpy.context.scene.render.resolution_x = 480
+# A 2:1 aspect ratio is common for 360° images
+bpy.context.scene.render.resolution_y = 360
+bpy.context.scene.render.image_settings.file_format = 'PNG'
+bpy.context.scene.render.filepath = '/tmp/360_panorama.png'
 
-# # Example: Upload to S3 (simplified)
-
-
-# def upload_to_s3(file_path, bucket_name, object_name):
-#     s3_client = boto3.client('s3')
-#     response = s3_client.upload_file(file_path, bucket_name, object_name)
-#     return f"https://{bucket_name}.s3.amazonaws.com/{object_name}"
+# Execute the render
+bpy.ops.render.render(write_still=True)
+# 360
