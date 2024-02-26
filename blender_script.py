@@ -24,10 +24,10 @@ if not free_camera:
     bpy.context.collection.objects.link(free_camera)
 
 # Camera properties
-free_camera.data.clip_start = 1
-free_camera.data.clip_end = 10000
-free_camera.data.angle = 1  # Assuming a fixed FOV, adjust as needed
-free_camera.data.sensor_fit = 'HORIZONTAL'
+# free_camera.data.clip_start = 1
+# free_camera.data.clip_end = 600
+# free_camera.data.angle = 1.5  # Assuming a fixed FOV, adjust as needed
+# free_camera.data.sensor_fit = 'HORIZONTAL'
 free_camera.location = mathutils.Vector(camera_position)
 
 # Apply rotation directly, converting from degrees to radians and adjusting for coordinate system differences
@@ -56,7 +56,7 @@ for mesh_name in mesh_names:
         # Setup nodes
         emission = nodes.new('ShaderNodeEmission')
         # Adjust the strength as needed
-        emission.inputs['Strength'].default_value = 50
+        emission.inputs['Strength'].default_value = 80
         emission.inputs['Color'].default_value = (
             1, 1, 1, 1)  # Adjust the color as needed
 
@@ -87,20 +87,27 @@ bg.inputs[1].default_value = 1.0  # Strength of the background color
 
 # Lighting setup
 if "Sun" not in bpy.data.objects:
-    bpy.ops.object.light_add(type='SUN', location=(10, 10, 10))
+    bpy.ops.object.light_add(type='SUN', location=(8.06, -10.71, 1.399))
 sun = bpy.data.objects['Sun']
 sun.data.use_shadow = True  # Ensure shadows are enabled
 sun.data.shadow_soft_size = 0.1  # Adjust for softer shadows
-sun.data.energy = 100
+sun.data.color = (1.0, 0.9, 0.8)  # Warm light, for example
+
+# Set Sun rotation (example: 45 degrees on the Z-axis, 30 degrees on the Y-axis)
+# Convert degrees to radians for Blender
+sun.rotation_euler[0] = math.radians(88.41)  # Rotation around X-axis
+sun.rotation_euler[1] = math.radians(52.55)  # Rotation around Y-axis
+sun.rotation_euler[2] = math.radians(42.73)  # Rotation around Z-axis
+sun.data.energy = 15
+sun.data.angle = math.radians(28.7)  # Convert degrees to radians if necessary
+
 # Render settings
 bpy.context.scene.render.engine = 'CYCLES'
-bpy.context.scene.cycles.samples = 1
+bpy.context.scene.cycles.samples = 10
 # Choose 'CYCLES' or 'BLENDER_EEVEE'
-bpy.context.scene.render.filepath = '/tmp/18.png'
+bpy.context.scene.render.filepath = '/tmp/21.png'
 bpy.context.scene.render.image_settings.file_format = 'PNG'
 bpy.ops.render.render(write_still=True)
-
-# 360
 
 
 # s3 output

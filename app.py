@@ -38,7 +38,7 @@ def render_scene():
 
 
 @app.route('/pano-render', methods=['POST'])
-def render_scene():
+def render_scene_360():
     data = request.json
 
     # Convert camera data to string arguments for the subprocess command
@@ -48,7 +48,7 @@ def render_scene():
     camera_rotation_arg = "{X},{Y},{Z}".format(**data['cameraData'].get(
         'rotation', {'X': 0, 'Y': 0, 'Z': 0}))  # Default to 0 rotation if not provided
 
-    glb_file_path = "./r4.glb"  # Ensure this path is correct
+    glb_file_path = "./r41.glb"  # Ensure this path is correct
     blender_path = "/snap/bin/blender"  # Adjust to your Blender installation path
     script_file = "./blender_script.py"
 
