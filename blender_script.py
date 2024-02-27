@@ -2,7 +2,9 @@ import bpy
 import mathutils
 import sys
 import math
+import requests
 
+import os
 # Parse arguments from the command line
 args = sys.argv[sys.argv.index("--") + 1:]
 glb_file_path, material_id, product_id, scene_id, camera_position_arg, camera_target_arg, camera_rotation_arg = args
@@ -77,6 +79,85 @@ for mesh_name in mesh_names:
         print(f"Mesh '{mesh_name}' not found")
 
 
+# List of texture URLs
+texture_urls = [
+    'https://dp20tzm6ev3tb.cloudfront.net/materials/chair002/texture3/ao14.jpg',
+    'https://dp20tzm6ev3tb.cloudfront.net/materials/chair002/texture3/bit14.jpg',
+    'https://dp20tzm6ev3tb.cloudfront.net/materials/chair002/texture3/met14.jpg',
+    'https://dp20tzm6ev3tb.cloudfront.net/materials/chair002/texture3/nor14.jpg',
+    'https://dp20tzm6ev3tb.cloudfront.net/materials/chair002/texture3/rough14.jpg',
+]
+
+# Directory to save downloaded textures
+save_dir = './textures/'
+
+# Download each texture
+for url in texture_urls:
+    filename = url.split('/')[-1]  # Extract filename from URL
+    filepath = save_dir + filename
+    response = requests.get(url)
+    with open(filepath, 'wb') as file:
+        file.write(response.content)
+    print(f'Downloaded {filename}')
+
+
+def setup_material_with_textures(texture_dir, object_name):
+    if object_name not in bpy.data.objects:
+        print(f"Object '{object_name}' not found.")
+        return
+
+    obj = bpy.data.objects[object_name]
+    if obj.data.materials:
+        mat = obj.data.materials[0]  # Use the first material if it exists
+    else:
+        mat = bpy.data.materials.new(name="CustomMaterial")
+        obj.data.materials.append(mat)
+
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    bsdf = nodes.new(type='ShaderNodeBsdfPrincipled')
+    output = nodes.new('ShaderNodeOutputMaterial')
+
+    texture_types = {
+        'ao': 'Base Color', 'bit': 'Base Color', 'met': 'Metallic',
+        'nor': 'Normal', 'rough': 'Roughness'
+    }
+
+    for texture_type, bsdf_input in texture_types.items():
+        texture_path = os.path.join(texture_dir, f'{texture_type}14.jpg')
+        if not os.path.exists(texture_path):
+            print(f"Texture file not found: {texture_path}")
+            continue  # Skip if texture file does not exist
+
+        image = bpy.data.images.load(texture_path)
+        texture_node = nodes.new(type='ShaderNodeTexImage')
+        texture_node.image = image
+        texture_node.location = (-400, -200 *
+                                 list(texture_types.keys()).index(texture_type))
+
+        if texture_type == 'nor':
+            normal_map = nodes.new(type='ShaderNodeNormalMap')
+            normal_map.location = (-200, bsdf.location[1] - 200)
+            links.new(texture_node.outputs['Color'],
+                      normal_map.inputs['Color'])
+            links.new(normal_map.outputs['Normal'], bsdf.inputs['Normal'])
+        else:
+            if texture_type in ['met', 'rough']:
+                texture_node.image.colorspace_settings.name = 'Non-Color'
+            links.new(texture_node.outputs['Color'], bsdf.inputs[bsdf_input])
+
+    links.new(bsdf.outputs['BSDF'], output.inputs['Surface'])
+
+    print(f"Material setup completed for '{object_name}'.")
+
+
+# Example usage
+setup_material_with_textures('./textures/', 'sofa')
+
+
 # Set the scene's active camera
 bpy.context.scene.camera = free_camera
 # Adjusting World background to solid white
@@ -105,7 +186,7 @@ sun.data.angle = math.radians(28.7)  # Convert degrees to radians if necessary
 bpy.context.scene.render.engine = 'CYCLES'
 bpy.context.scene.cycles.samples = 10
 # Choose 'CYCLES' or 'BLENDER_EEVEE'
-bpy.context.scene.render.filepath = '/tmp/21.png'
+bpy.context.scene.render.filepath = '/tmp/24.png'
 bpy.context.scene.render.image_settings.file_format = 'PNG'
 bpy.ops.render.render(write_still=True)
 
