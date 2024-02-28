@@ -1,10 +1,11 @@
+import sys
 import bpy
 import mathutils
-import sys
 import math
 import requests
-
 import os
+
+
 # Parse arguments from the command line
 args = sys.argv[sys.argv.index("--") + 1:]
 glb_file_path, material_id, product_id, scene_id, camera_position_arg, camera_target_arg, camera_rotation_arg = args
@@ -155,7 +156,7 @@ def setup_material_with_textures(texture_dir, object_name):
 
 
 # Example usage
-setup_material_with_textures('./textures/', 'sofa')
+# setup_material_with_textures('./textures/', 'sofa')
 
 
 # Set the scene's active camera
@@ -184,50 +185,8 @@ sun.data.angle = math.radians(28.7)  # Convert degrees to radians if necessary
 
 # Render settings
 bpy.context.scene.render.engine = 'CYCLES'
-bpy.context.scene.cycles.samples = 10
+bpy.context.scene.cycles.samples = 1
 # Choose 'CYCLES' or 'BLENDER_EEVEE'
-bpy.context.scene.render.filepath = '/tmp/24.png'
+bpy.context.scene.render.filepath = '/tmp/test3.png'
 bpy.context.scene.render.image_settings.file_format = 'PNG'
 bpy.ops.render.render(write_still=True)
-
-
-# s3 output
-# import boto3
-# from flask import send_file
-# import bpy
-# import sys
-
-# # Assume the last three arguments are material_id, product_id, and scene_id
-# args = sys.argv[sys.argv.index("--") + 1:]  # Get arguments after "--"
-# material_id, product_id, scene_id = args
-
-# # Set the output path dynamically, e.g., based on material_id, product_id, and scene_id
-# output_path = f"/tmp/render_{material_id}_{product_id}_{scene_id}.png"
-
-# # Set render settings
-# bpy.context.scene.render.filepath = output_path
-# bpy.context.scene.render.image_settings.file_format = 'PNG'  # Set output format to PNG
-
-# # Render the scene
-# bpy.ops.render.render(write_still=True)
-
-
-# @app.route('/render_output/<material_id>/<product_id>/<scene_id>')
-# def serve_render_output(material_id, product_id, scene_id):
-#     # Construct the file path based on the request parameters
-#     file_path = f"/tmp/render_{material_id}_{product_id}_{scene_id}.png"
-
-#     # Check if file exists, if not return a 404 or similar
-#     try:
-#         return send_file(file_path, mimetype='image/png')
-#     except FileNotFoundError:
-#         return jsonify({"error": "File not found"}), 404
-
-
-# # Example: Upload to S3 (simplified)
-
-
-# def upload_to_s3(file_path, bucket_name, object_name):
-#     s3_client = boto3.client('s3')
-#     response = s3_client.upload_file(file_path, bucket_name, object_name)
-#     return f"https://{bucket_name}.s3.amazonaws.com/{object_name}"
