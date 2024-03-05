@@ -169,7 +169,7 @@ bg.inputs[1].default_value = 1.0  # Strength of the background color
 
 # Lighting setup
 if "Sun" not in bpy.data.objects:
-    bpy.ops.object.light_add(type='SUN', location=(8.06, -10.71, 1.399))
+    bpy.ops.object.light_add(type='SUN', location=(-10.14, -5.55, 3.08))
 sun = bpy.data.objects['Sun']
 sun.data.use_shadow = True  # Ensure shadows are enabled
 sun.data.shadow_soft_size = 0.1  # Adjust for softer shadows
@@ -177,16 +177,16 @@ sun.data.color = (1.0, 0.9, 0.8)  # Warm light, for example
 
 # Set Sun rotation (example: 45 degrees on the Z-axis, 30 degrees on the Y-axis)
 # Convert degrees to radians for Blender
-sun.rotation_euler[0] = math.radians(88.41)  # Rotation around X-axis
-sun.rotation_euler[1] = math.radians(52.55)  # Rotation around Y-axis
-sun.rotation_euler[2] = math.radians(42.73)  # Rotation around Z-axis
-sun.data.energy = 15
+sun.rotation_euler[0] = math.radians(57.11)  # Rotation around X-axis
+sun.rotation_euler[1] = math.radians(-60.06)  # Rotation around Y-axis
+sun.rotation_euler[2] = math.radians(-14.46)  # Rotation around Z-axis
+sun.data.energy = 40
 sun.data.angle = math.radians(28.7)  # Convert degrees to radians if necessary
 
 # Render settings
 bpy.context.scene.render.engine = 'CYCLES'
 bpy.context.scene.cycles.samples = 1
 # Choose 'CYCLES' or 'BLENDER_EEVEE'
-bpy.context.scene.render.filepath = '/tmp/test3.png'
+bpy.context.scene.render.filepath = '/tmp/sample.png'
 bpy.context.scene.render.image_settings.file_format = 'PNG'
 bpy.ops.render.render(write_still=True)

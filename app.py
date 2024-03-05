@@ -1,3 +1,5 @@
+from flask_cors import CORS  # Import CORS
+import random
 import os
 import subprocess
 from flask import Flask, request, jsonify
@@ -6,7 +8,10 @@ from botocore.exceptions import NoCredentialsError
 from dotenv import load_dotenv
 from botocore.config import Config
 load_dotenv()
+
 app = Flask(__name__)
+
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 
 def upload_file_to_s3(file_name, bucket, object_name=None, region_name="us-east-1", content_type='application/octet-stream', make_public=False):
@@ -65,7 +70,7 @@ def render_scene():
     camera_rotation_arg = "{X},{Y},{Z}".format(**data['cameraData'].get(
         'rotation', {'X': 0, 'Y': 0, 'Z': 0}))  # Default to 0 rotation if not provided
 
-    glb_file_path = "./r4.glb"  # Ensure this path is correct
+    glb_file_path = "./room4.glb"  # Ensure this path is correct
     blender_path = "/snap/bin/blender"  # Adjust to your Blender installation path
     script_file = "./blender_script.py"
 
@@ -80,11 +85,12 @@ def render_scene():
         str(data.get('scene_id', '')),     # Convert to string
         camera_position_arg, camera_target_arg, camera_rotation_arg  # Include rotation
     ]
-
+    num = random.random()
     # Make sure to adjust file_name, bucket_name, and object_name with actual values
-    file_name = '/tmp/test3.png'
+
+    file_name = '/tmp/sample.png'
     bucket_name = 'inno-render'
-    object_name = 'desired-object-name-in-s31.png'  # Optional
+    object_name = '1.png'  # Optional
     content_type = 'image/jpeg'  # MIME type for a JPEG image
     region_name = "us-east-1"
     print("Executing command:", " ".join(command))
@@ -111,9 +117,9 @@ def render_scene_360():
     camera_rotation_arg = "{X},{Y},{Z}".format(**data['cameraData'].get(
         'rotation', {'X': 0, 'Y': 0, 'Z': 0}))  # Default to 0 rotation if not provided
 
-    glb_file_path = "./r41.glb"  # Ensure this path is correct
+    glb_file_path = "./room6.glb"  # Ensure this path is correct
     blender_path = "/snap/bin/blender"  # Adjust to your Blender installation path
-    script_file = "./blender_script.py"
+    script_file = "./blender_script_360.py"
 
     # Construct the command with dynamic values
     command = [
@@ -126,11 +132,26 @@ def render_scene_360():
         str(data.get('scene_id', '')),     # Convert to string
         camera_position_arg, camera_target_arg, camera_rotation_arg  # Include rotation
     ]
+    num = random.random()
+    # Make sure to adjust file_name, bucket_name, and object_name with actual values
 
+    file_name = '/tmp/sample-360.png'
+    file_name = '/tmp/sample-360.png'
+    bucket_name = 'inno-render'
+    object_name = '1-360.png'  # Optional
+    content_type = 'image/jpeg'  # MIME type for a JPEG image
+    region_name = "us-east-1"
     print("Executing command:", " ".join(command))
     subprocess.run(command)
+    uploaded_file_url = upload_file_to_s3(
+        file_name, bucket_name, object_name, region_name, content_type, make_public=True)
 
-    return jsonify({"message": "Rendering started", "status": "success"})
+    if uploaded_file_url:
+        print(f"File uploaded successfully: {uploaded_file_url}")
+    else:
+        print("Upload failed")
+
+    return jsonify({"message": "Rendering started", "status": uploaded_file_url})
 
 
 if __name__ == '__main__':
