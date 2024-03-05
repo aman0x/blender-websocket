@@ -2,3 +2,5 @@
 *.glb
 *.tga
 /https:
+/myvenv
+.env
