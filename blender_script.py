@@ -6,7 +6,6 @@ import requests
 import os
 
 
-# Parse arguments from the command line
 args = sys.argv[sys.argv.index("--") + 1:]
 glb_file_path, material_id, product_id, scene_id, camera_position_arg, camera_target_arg, camera_rotation_arg = args
 
@@ -18,7 +17,9 @@ camera_rotation = tuple(map(float, camera_rotation_arg.split(',')))
 
 # Import the GLB file
 bpy.ops.import_scene.gltf(filepath=glb_file_path)
-
+if "Cube" in bpy.data.objects:
+    cube = bpy.data.objects["Cube"]
+    bpy.data.objects.remove(cube, do_unlink=True)
 # Setting up the camera
 camera_data = bpy.data.cameras.new(name="FreeCameraData")
 free_camera = bpy.data.objects.get("FreeCamera")
@@ -27,10 +28,10 @@ if not free_camera:
     bpy.context.collection.objects.link(free_camera)
 
 # Camera properties
-# free_camera.data.clip_start = 1
-# free_camera.data.clip_end = 600
-# free_camera.data.angle = 1.5  # Assuming a fixed FOV, adjust as needed
-# free_camera.data.sensor_fit = 'HORIZONTAL'
+free_camera.data.clip_start = 1
+free_camera.data.clip_end = 10000
+free_camera.data.angle = 1.5  # Assuming a fixed FOV, adjust as needed
+free_camera.data.sensor_fit = 'HORIZONTAL'
 free_camera.location = mathutils.Vector(camera_position)
 
 # Apply rotation directly, converting from degrees to radians and adjusting for coordinate system differences
@@ -42,8 +43,8 @@ free_camera.rotation_euler = mathutils.Euler(
     (camera_rotation_radians[0], camera_rotation_radians[1], camera_rotation_radians[2]), 'XYZ')
 
 
-mesh_names = ["Corona Light001", "Corona Light002",
-              "Corona Light003", "Corona Light003.009"]  # Add more names as needed
+mesh_names = ["light 300zww", "light 300", "Corona Light001", "Corona Light001.001", "light 600", "light 600.002", "light 600.004", "light 600.005", "lamp015.006", "lamp015.007", "lamp015.009", "lamp015.008",
+              "light 600.003", "light 600.001", "light 300zww", "light 300", "light 600.002", ]  # Add more names as needed
 
 for mesh_name in mesh_names:
     mesh_light = bpy.data.objects.get(mesh_name)
@@ -59,7 +60,7 @@ for mesh_name in mesh_names:
         # Setup nodes
         emission = nodes.new('ShaderNodeEmission')
         # Adjust the strength as needed
-        emission.inputs['Strength'].default_value = 80
+        emission.inputs['Strength'].default_value = 20
         emission.inputs['Color'].default_value = (
             1, 1, 1, 1)  # Adjust the color as needed
 
@@ -158,14 +159,41 @@ def setup_material_with_textures(texture_dir, object_name):
 # Example usage
 # setup_material_with_textures('./textures/', 'sofa')
 
+def setup_world_hdri(hdri_path):
+    # Ensure we're using Cycles render engine for HDRIs
 
+    # Get the world and clear any existing nodes
+    world = bpy.context.scene.world
+    world.use_nodes = True
+    nodes = world.node_tree.nodes
+    nodes.clear()
+
+    # Create new nodes: Environment Texture, Background, and World Output
+    env_texture = nodes.new(type='ShaderNodeTexEnvironment')
+    background = nodes.new(type='ShaderNodeBackground')
+    world_output = nodes.new(type='ShaderNodeOutputWorld')
+
+    # Set the HDRI image
+    env_texture.image = bpy.data.images.load(hdri_path)
+
+    # Link the nodes
+    links = world.node_tree.links
+    links.new(env_texture.outputs['Color'], background.inputs['Color'])
+    links.new(background.outputs['Background'], world_output.inputs['Surface'])
+
+    print("World setup with HDRI completed.")
+
+
+# Example usage
+hdri_path = '2.hdr'  # Match the path used in Part 1
+setup_world_hdri(hdri_path)
 # Set the scene's active camera
 bpy.context.scene.camera = free_camera
 # Adjusting World background to solid white
-bpy.data.worlds['World'].use_nodes = True
-bg = bpy.data.worlds['World'].node_tree.nodes['Background']
-bg.inputs[0].default_value = (1, 1, 1, 1)  # Correct alpha value to 1
-bg.inputs[1].default_value = 1.0  # Strength of the background color
+# bpy.data.worlds['World'].use_nodes = True
+# bg = bpy.data.worlds['World'].node_tree.nodes['Background']
+# bg.inputs[0].default_value = (1, 1, 1, 1)  # Correct alpha value to 1
+# bg.inputs[1].default_value = 1.0  # Strength of the background color
 
 # Lighting setup
 if "Sun" not in bpy.data.objects:
@@ -180,12 +208,12 @@ sun.data.color = (1.0, 0.9, 0.8)  # Warm light, for example
 sun.rotation_euler[0] = math.radians(57.11)  # Rotation around X-axis
 sun.rotation_euler[1] = math.radians(-60.06)  # Rotation around Y-axis
 sun.rotation_euler[2] = math.radians(-14.46)  # Rotation around Z-axis
-sun.data.energy = 40
+sun.data.energy = 15
 sun.data.angle = math.radians(28.7)  # Convert degrees to radians if necessary
 
 # Render settings
 bpy.context.scene.render.engine = 'CYCLES'
-bpy.context.scene.cycles.samples = 1
+bpy.context.scene.cycles.samples = 23
 # Choose 'CYCLES' or 'BLENDER_EEVEE'
 bpy.context.scene.render.filepath = '/tmp/sample.png'
 bpy.context.scene.render.image_settings.file_format = 'PNG'
