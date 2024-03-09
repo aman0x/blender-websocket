@@ -1,3 +1,4 @@
+import sys
 from flask_cors import CORS  # Import CORS
 import random
 import os
@@ -8,7 +9,6 @@ from botocore.exceptions import NoCredentialsError
 from dotenv import load_dotenv
 from botocore.config import Config
 load_dotenv()
-
 app = Flask(__name__)
 
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
@@ -59,9 +59,19 @@ def upload_file_to_s3(file_name, bucket, object_name=None, region_name="us-east-
         return None
 
 
+@app.route('/test', methods=['POST'])
+def test():
+    data = request.json
+    print(data)
+    glb_file_path = "./room6.glb"  # Ensure this path is correct
+    blender_path = "/snap/bin/blender"  # Adjust to your Blender installation path
+    script_file = "./blender_script.py"
+
+
 @app.route('/render', methods=['POST'])
 def render_scene():
     data = request.json
+    print(data)
 
     # Convert camera data to string arguments for the subprocess command
     camera_position_arg = "{X},{Y},{Z}".format(

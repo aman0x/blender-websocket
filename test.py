@@ -1,0 +1,4 @@
+[1, 1, 1] (3) [-0.09209910527435192, 2.5496445629635867, 0] (3) [1.555613934993744, 1.0919689610600471, 0.17366176843643188] 0.8 2.0012048192771084 0.1 10000
+
+
+console.log(positionArray, rotationArray, positionTargetArray, fov, aspectRatio, nearPlane, farPlane)

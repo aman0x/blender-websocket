@@ -27,6 +27,9 @@ if not free_camera:
     free_camera = bpy.data.objects.new("FreeCamera", camera_data)
     bpy.context.collection.objects.link(free_camera)
 
+blender_fov = math.degrees(
+    2 * math.atan(math.tan(math.radians(babylon_fov) / 2)))
+free_camera.data.fov = blender_fov
 # Camera properties
 free_camera.data.clip_start = 1
 free_camera.data.clip_end = 10000
@@ -188,7 +191,6 @@ def setup_world_hdri(hdri_path):
 hdri_path = '2.hdr'  # Match the path used in Part 1
 setup_world_hdri(hdri_path)
 # Set the scene's active camera
-bpy.context.scene.camera = free_camera
 # Adjusting World background to solid white
 # bpy.data.worlds['World'].use_nodes = True
 # bg = bpy.data.worlds['World'].node_tree.nodes['Background']
@@ -213,8 +215,8 @@ sun.data.angle = math.radians(28.7)  # Convert degrees to radians if necessary
 
 # Render settings
 bpy.context.scene.render.engine = 'CYCLES'
-bpy.context.scene.cycles.samples = 23
+bpy.context.scene.cycles.samples = 1
 # Choose 'CYCLES' or 'BLENDER_EEVEE'
-bpy.context.scene.render.filepath = '/tmp/sample.png'
+bpy.context.scene.render.filepath = '/tmp/sample0.png'
 bpy.context.scene.render.image_settings.file_format = 'PNG'
 bpy.ops.render.render(write_still=True)
