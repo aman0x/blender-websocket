@@ -80,7 +80,7 @@ def render_scene():
     camera_rotation_arg = "{X},{Y},{Z}".format(**data['cameraData'].get(
         'rotation', {'X': 0, 'Y': 0, 'Z': 0}))  # Default to 0 rotation if not provided
 
-    glb_file_path = "./room6.glb"  # Ensure this path is correct
+    glb_file_path = "./room6-1.glb"  # Ensure this path is correct
     blender_path = "/snap/bin/blender"  # Adjust to your Blender installation path
     script_file = "./blender_script.py"
 

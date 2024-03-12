@@ -197,8 +197,8 @@ bg.inputs[0].default_value = (1, 1, 1, 1)  # Correct alpha value to 1
 bg.inputs[1].default_value = 1.0  # Strength of the background color
 bpy.context.scene.cycles.panorama_type = 'EQUIRECTANGULAR'
 # Example resolution, adjust as needed
-bpy.context.scene.render.resolution_x = 800
-bpy.context.scene.render.resolution_y = 400
+bpy.context.scene.render.resolution_x = 7680
+bpy.context.scene.render.resolution_y = 4320
 # Lighting setup
 if "Sun" not in bpy.data.objects:
     bpy.ops.object.light_add(type='SUN', location=(8.06, -10.71, 1.399))
@@ -217,7 +217,7 @@ sun.data.angle = math.radians(28.7)  # Convert degrees to radians if necessary
 
 # Render settings
 bpy.context.scene.render.engine = 'CYCLES'
-bpy.context.scene.cycles.samples = 1
+bpy.context.scene.cycles.samples = 5
 # Choose 'CYCLES' or 'BLENDER_EEVEE'
 bpy.context.scene.render.filepath = '/tmp/sample-360.png'
 bpy.context.scene.render.image_settings.file_format = 'PNG'
